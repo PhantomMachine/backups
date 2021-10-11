@@ -1,0 +1,21 @@
+#!/bin/bash
+
+DATE=$(date +%Y-%m-%d_%H-%M-%S)
+FILE=../passbolt-$DATE.tar.gz
+TARGET=/eeenclave/backups/passbolt/
+
+mkdir -p /tmp/passbolt
+cd /tmp/passbolt
+
+mysqldump -upassbolt -ppassbolt passbolt > dump.sql
+docker cp passbolt-v2.2:/var/www/passbolt/config/passbolt.default.php .
+docker cp passbolt-v2.2:/var/www/passbolt/config/gpg/serverkey_private.asc .
+docker cp passbolt-v2.2:/var/www/passbolt/config/gpg/serverkey.asc .
+
+tar czf $FILE *
+gpg --output $FILE.gpg --encrypt --recipient me@ajholzer.dev $FILE
+/home/pi/.local/bin/aws s3 cp $FILE.gpg s3:/$TARGET
+
+rm $FILE*
+cd -
+rm -rf /tmp/passbolt
