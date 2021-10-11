@@ -1,0 +1,16 @@
+#!/bin/bash
+
+DIR=/tmp/pihole
+TARGET=/eeenclave/backups/pihole/
+
+mkdir $DIR
+cd $DIR
+
+/usr/local/bin/pihole -a -t
+FILE=$(ls)
+
+gpg --output $FILE.gpg --encrypt --recipient me@ajholzer.dev $FILE
+aws s3 cp $FILE.gpg s3:/$TARGET
+
+cd -
+rm -rf /tmp/pihole
